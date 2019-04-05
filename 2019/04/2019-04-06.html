@@ -9,4 +9,51 @@ source activate py35 # for Linux &amp; Mac
 (py35) user@user-XPS-8920:~$ python --version
 Python 3.5.5 :: Anaconda, Inc.
 # 可以得到`Python 3.5.5 :: Anaconda, Inc.`，即系统已经切换到了3.５的环境
-</pre><h2>返回主环境</h2><p><br></p>
+</pre><p>返回主环境</p><p><br></p><pre class="ql-syntax" spellcheck="false"># 如果想返回默认的python 2.7环境，运行
+deactivate py35 # for Windows
+source deactivate py35 # for Linux &amp; Mac
+</pre><h2>删除环境</h2><pre class="ql-syntax" spellcheck="false"># 删除一个已有的环境
+conda remove --name py35 --all
+</pre><h2>查看系统中的所有环境</h2><p>用户安装的不同Python环境会放在<code style="background-color: rgb(246, 246, 246);">~/anaconda/envs</code>目录下。查看当前系统中已经安装了哪些环境，使用<code style="background-color: rgb(246, 246, 246);">conda info -e</code>。</p><pre class="ql-syntax" spellcheck="false">user@user-XPS-8920:~$ conda info -e
+# conda environments:
+#
+base                  *  /home/user/anaconda2
+caffe                    /home/user/anaconda2/envs/caffe
+py35                    /home/user/anaconda2/envs/py35
+tf                       /home/user/anaconda2/envs/tf
+</pre><h2>Conda的包管理</h2><h2>安装库</h2><p>为当前环境安装库</p><pre class="ql-syntax" spellcheck="false"># numpy
+conda install numpy
+# conda会从从远程搜索numpy的相关信息和依赖项目
+</pre><h2>查看已经安装的库</h2><pre class="ql-syntax" spellcheck="false"># 查看已经安装的packages
+conda list
+# 最新版的conda是从site-packages文件夹中搜索已经安装的包，可以显示出通过各种方式安装的包
+</pre><h2>查看某个环境的已安装包</h2><pre class="ql-syntax" spellcheck="false"># 查看某个指定环境的已安装包
+conda list -n py35
+</pre><h2>搜索package的信息</h2><pre class="ql-syntax" spellcheck="false"># 查找package信息
+conda search numpy
+Loading channels: done
+# Name                  Version           Build  Channel             
+numpy                     1.5.1          py26_1  pkgs/free           
+
+...
+
+numpy                    1.15.1  py37hec00662_0  anaconda/pkgs/main  
+numpy                    1.15.1  py37hec00662_0  pkgs/main
+</pre><h2>安装package到指定的环境</h2><pre class="ql-syntax" spellcheck="false"># 安装package
+conda install -n py35 numpy
+# 如果不用-n指定环境名称，则被安装在当前活跃环境
+# 也可以通过-c指定通过某个channel安装
+</pre><h2>更新package</h2><pre class="ql-syntax" spellcheck="false"># 更新package
+conda update -n py35 numpy
+</pre><h2>删除package</h2><pre class="ql-syntax" spellcheck="false"># 删除package
+conda remove -n py35 numpy
+</pre><h2>更新conda</h2><pre class="ql-syntax" spellcheck="false"># 更新conda，保持conda最新
+conda update conda
+</pre><h2>更新anaconda</h2><pre class="ql-syntax" spellcheck="false"># 更新anaconda
+conda update anaconda
+ ```
+### 更新Python
+</pre><h2>更新python</h2><p>conda update python</p><h2>假设当前环境是python 3.5, conda会将python升级为3.5.x系列的当前最新版本</h2><h2>设置国内镜像</h2><p>因为<a href="https://link.zhihu.com/?target=http%3A//Anaconda.org" target="_blank" style="background-color: transparent; color: transparent;">http://</a><a href="https://link.zhihu.com/?target=http%3A//Anaconda.org" target="_blank" style="color: inherit;">Anaconda.org</a>的服务器在国外，所有有些库下载缓慢，可以使用清华Anaconda镜像源。 网站地址:&nbsp;<a href="https://link.zhihu.com/?target=https%3A//mirrors.tuna.tsinghua.edu.cn/help/anaconda/" target="_blank" style="color: inherit;">清华大学开源软件镜像站</a></p><p><br></p><p><br></p><h2>Anaconda</h2><p>镜像 Anaconda 安装包可以到&nbsp;<a href="https://link.zhihu.com/?target=https%3A//mirrors.tuna.tsinghua.edu.cn/anaconda/archive/" target="_blank" style="background-color: transparent; color: transparent;">https://</a><a href="https://link.zhihu.com/?target=https%3A//mirrors.tuna.tsinghua.edu.cn/anaconda/archive/" target="_blank" style="color: inherit;">mirrors.tuna.tsinghua.edu.cn</a><a href="https://link.zhihu.com/?target=https%3A//mirrors.tuna.tsinghua.edu.cn/anaconda/archive/" target="_blank" style="color: transparent; background-color: transparent;">/anaconda/archive/</a>&nbsp;下载。 TUNA还提供了Anaconda仓库的镜像，运行以下命令：</p><p><br></p><p><br></p><pre class="ql-syntax" spellcheck="false">conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free/ 
+conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main/ 
+conda config --set show_channel_urls yes
+</pre><p><br></p><p><br></p><p>即可添加 Anaconda Python 免费仓库。</p><p>运行&nbsp;<code style="background-color: rgb(246, 246, 246);">conda install numpy</code>&nbsp;测试一下吧。</p><h2>Miniconda　镜像</h2><p>Miniconda 是一个 Anaconda 的轻量级替代，默认只包含了 python 和 conda，但是可以通过 pip 和 conda 来安装所需要的包。</p><h2>Miniconda 安装包可以到&nbsp;<a href="https://link.zhihu.com/?target=https%3A//mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/" target="_blank" style="background-color: transparent; color: transparent;">https://</a><a href="https://link.zhihu.com/?target=https%3A//mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/" target="_blank" style="color: inherit;">mirrors.tuna.tsinghua.edu.cn</a><a href="https://link.zhihu.com/?target=https%3A//mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/" target="_blank" style="color: transparent; background-color: transparent;">/anaconda/miniconda/</a>&nbsp;下载。</h2><p><br></p>
