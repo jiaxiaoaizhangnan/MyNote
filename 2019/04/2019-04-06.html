@@ -1,1 +1,12 @@
-<attachment contenteditable="false" data-atts="%5B%5D" data-aid=".atts-391812cd-9dd2-4c63-a88d-d9e3d71280f8"></attachment><p><br></p>
+<attachment contenteditable="false" data-atts="%5B%5D" data-aid=".atts-391812cd-9dd2-4c63-a88d-d9e3d71280f8"></attachment><h2>Conda的环境管理</h2><h2>创建环境</h2><pre class="ql-syntax" spellcheck="false"># 创建一个名为python34的环境，指定Python版本是3.5（不用管是3.5.x，conda会为我们自动寻找3.５.x中的最新版本）
+conda create --name py35 python=3.5
+</pre><h2>激活环境</h2><pre class="ql-syntax" spellcheck="false"># 安装好后，使用activate激活某个环境
+activate py35 # for Windows
+source activate py35 # for Linux &amp; Mac
+(py35) user@user-XPS-8920:~$
+ # 激活后，会发现terminal输入的地方多了py35的字样，实际上，此时系统做的事情就是把默认2.7环境从PATH中去除，再把3.4对应的命令加入PATH
+
+(py35) user@user-XPS-8920:~$ python --version
+Python 3.5.5 :: Anaconda, Inc.
+# 可以得到`Python 3.5.5 :: Anaconda, Inc.`，即系统已经切换到了3.５的环境
+</pre><h2>返回主环境</h2><p><br></p>
