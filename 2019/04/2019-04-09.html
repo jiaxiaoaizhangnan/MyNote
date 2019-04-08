@@ -1,1 +1,64 @@
-<attachment contenteditable="false" data-atts="%5B%5D" data-aid=".atts-0cbe78bd-1b13-468c-ad4b-608d34bdf83b"></attachment><p>tensorflow 迁移学习：<a href="https://codelabs.developers.google.com/codelabs/tensorflow-for-poets/#0" target="_blank">https://codelabs.developers.google.com/codelabs/tensorflow-for-poets/#0</a></p><p><br></p><p><br></p>
+<attachment contenteditable="false" data-atts="%5B%5D" data-aid=".atts-0cbe78bd-1b13-468c-ad4b-608d34bdf83b"></attachment><p>tensorflow 迁移学习：<a href="https://codelabs.developers.google.com/codelabs/tensorflow-for-poets/#0" target="_blank">https://codelabs.developers.google.com/codelabs/tensorflow-for-poets/#0</a></p><p><br></p><h1>What Does A Face Detection Neural Network Look&nbsp;Like?</h1><p><a href="https://towardsdatascience.com/@reina.wang?source=post_header_lockup" target="_blank" style="color: inherit; background-color: transparent;"><img src="https://cdn-images-1.medium.com/fit/c/50/50/1*diRpAT2jWilemimLhfwHzw.jpeg" alt="Go to the profile of Chi-Feng Wang"></a></p><p><a href="https://towardsdatascience.com/@reina.wang" target="_blank" style="color: rgba(0, 0, 0, 0.84); background-color: transparent;">Chi-Feng Wang</a></p><p>Jul 24, 2018</p><p>In my&nbsp;<a href="https://medium.com/@reina.wang/mtcnn-face-detection-cdcb20448ce0" target="_blank" style="color: inherit; background-color: transparent;">last post</a>, I explored the Multi-task Cascaded Convolutional Network (MTCNN) model, using it to detect faces with my webcam. In this post, I will examine the structure of the neural network.</p><p>The MTCNN model consists of 3 separate networks: the P-Net, the R-Net, and the O-Net:</p><p><img src="https://cdn-images-1.medium.com/max/800/1*ICM3jnRB1unY6G5ZRGorfg.png"></p><p>Image 1: MTCNN Structure //&nbsp;<a href="https://arxiv.org/ftp/arxiv/papers/1604/1604.02878.pdf" target="_blank" style="color: inherit; background-color: transparent;">Source</a></p><p>For every image we pass in, the network creates an image pyramid: that is, it creates multiple copies of that image in different sizes.</p><p><img src="https://cdn-images-1.medium.com/max/800/1*JH-L5EmTqj_fHEcXnzZT5Q.png"></p><p>Image 2: Image Pyramid //&nbsp;<a href="https://arxiv.org/ftp/arxiv/papers/1604/1604.02878.pdf" target="_blank" style="color: inherit; background-color: transparent;">Source</a></p><p>In the P-Net, for each scaled image, a 12x12 kernel runs through the image, searching for a face. In the image below, the red square represents the kernel, which slowly moves across and down the image, searching for a face.</p><p><img src="https://cdn-images-1.medium.com/max/800/1*r3aAaOV2CWYBJav3uWRP5A.png"></p><p>Image 3: 12x12 kernel in the top right corner. After scanning this corner, it shifts sideways (or downwards) by 1 pixel, and continues doing that until it has gone through the entire&nbsp;image.</p><p>Within each of these 12x12 kernels, 3 convolutions are run through (If you don’t know what convolutions are, check out&nbsp;<a href="https://medium.com/@reina.wang.tw/what-is-a-neural-network-6010edabde2b" target="_blank" style="color: inherit; background-color: transparent;">my other article</a>&nbsp;or&nbsp;<a href="http://setosa.io/ev/image-kernels/" target="_blank" style="color: inherit; background-color: transparent;">this site</a>) with 3x3 kernels. After every convolution layer, a prelu layer is implemented (when you multiply every negative pixel with a certain number ‘alpha’. ‘Alpha’ is to be determined through training). In addition, a maxpool layer is put in after the first prelu layer(maxpool takes out every other pixel, leaving only the largest one in the vicinity).</p><p><img src="https://cdn-images-1.medium.com/max/800/1*w49KKbft4Iq3xLsoNy-l-Q.png"></p><p>Image 4: Max-pool //&nbsp;<a href="https://youtu.be/gbceqO8PpBg" target="_blank" style="color: inherit; background-color: transparent;">Source</a></p><p>After the third convolution layer, the network splits into two layers. The activations from the third layer are passed to two separate convolution layers, and a softmax layer after one of those convolution layers (softmax assigns decimal probabilities to every result, and the probabilities add up to 1. In this case, it outputs 2 probabilities: the probability that there&nbsp;<strong>is</strong>&nbsp;a face in the area and the probability that there&nbsp;<strong>isn’t&nbsp;</strong>a face).</p><p><img src="https://cdn-images-1.medium.com/max/800/1*Ey4E1ZreYY8F_GiXLVCD_Q.png"></p><p>Image 5:&nbsp;P-Net</p><p>Convolution 4–1 outputs the probability of a face being in each bounding box, and convolution 4–2 outputs the coordinates of the bounding boxes.</p><p>Taking a look at mtcnn.py will show you the structure of P-Net:</p><pre class="ql-syntax" spellcheck="false">class PNet(Network):
+def _config(self):
+layer_factory = LayerFactory(self)
+layer_factory.new_feed(name='data', layer_shape=(None, None, None, 3))
+layer_factory.new_conv(name='conv1', kernel_size=(3, 3), channels_output=10, stride_size=(1, 1),
+padding='VALID', relu=False)
+layer_factory.new_prelu(name='prelu1')
+layer_factory.new_max_pool(name='pool1', kernel_size=(2, 2), stride_size=(2, 2))
+layer_factory.new_conv(name='conv2', kernel_size=(3, 3), channels_output=16, stride_size=(1, 1),
+padding='VALID', relu=False)
+layer_factory.new_prelu(name='prelu2')
+layer_factory.new_conv(name='conv3', kernel_size=(3, 3), channels_output=32, stride_size=(1, 1),
+padding='VALID', relu=False)
+layer_factory.new_prelu(name='prelu3')
+layer_factory.new_conv(name='conv4-1', kernel_size=(1, 1), channels_output=2, stride_size=(1, 1), relu=False)
+layer_factory.new_softmax(name='prob1', axis=3)
+layer_factory.new_conv(name='conv4-2', kernel_size=(1, 1), channels_output=4, stride_size=(1, 1),
+input_layer_name='prelu3', relu=False)
+</pre><p><br></p><p>R-Net has a similar structure, but with even more layers. It takes the P-Net bounding boxes as its inputs, and refines its coordinates.</p><p><img src="https://cdn-images-1.medium.com/max/800/1*5KNvVDQHpsquv5yinnTDWw.png"></p><p>Image 6:&nbsp;R-Net</p><p>Similarly, R-Net splits into two layers in the end, giving out two outputs: the coordinates of the new bounding boxes and the machine’s confidence in each bounding box. Again, mtcnn.py includes the structure of R-Net:</p><pre class="ql-syntax" spellcheck="false">class RNet(Network):
+def _config(self):
+layer_factory = LayerFactory(self)
+layer_factory.new_feed(name='data', layer_shape=(None, 24, 24, 3))
+layer_factory.new_conv(name='conv1', kernel_size=(3, 3), channels_output=28, stride_size=(1, 1),
+padding='VALID', relu=False)
+layer_factory.new_prelu(name='prelu1')
+layer_factory.new_max_pool(name='pool1', kernel_size=(3, 3), stride_size=(2, 2))
+layer_factory.new_conv(name='conv2', kernel_size=(3, 3), channels_output=48, stride_size=(1, 1),
+padding='VALID', relu=False)
+layer_factory.new_prelu(name='prelu2')
+layer_factory.new_max_pool(name='pool2', kernel_size=(3, 3), stride_size=(2, 2), padding='VALID')
+layer_factory.new_conv(name='conv3', kernel_size=(2, 2), channels_output=64, stride_size=(1, 1),
+padding='VALID', relu=False)
+layer_factory.new_prelu(name='prelu3')
+layer_factory.new_fully_connected(name='fc1', output_count=128, relu=False)  
+layer_factory.new_prelu(name='prelu4')
+layer_factory.new_fully_connected(name='fc2-1', output_count=2, relu=False)  
+layer_factory.new_softmax(name='prob1', axis=1)
+layer_factory.new_fully_connected(name='fc2-2', output_count=4, relu=False, input_layer_name='prelu4')
+</pre><p><br></p><p>Finally, O-Net takes the R-Net bounding boxes as inputs and marks down the coordinates of facial landmarks.</p><p><img src="https://cdn-images-1.medium.com/max/800/1*BT6XlTxVjqaNSj87iDFjcg.png"></p><p><img src="https://cdn-images-1.medium.com/max/800/1*eBiydaqk2HU36P0LcUbGzA.png"></p><p>Image 7:&nbsp;O-Net</p><p>O-Net splits into 3 layers in the end, giving out 3 different outputs: the probability of a face being in the box, the coordinates of the bounding box, and the coordinates of the facial landmarks (locations of the eyes, nose, and mouth). Here’s the code for O-Net:</p><pre class="ql-syntax" spellcheck="false">class ONet(Network):
+def _config(self):
+layer_factory = LayerFactory(self)
+layer_factory.new_feed(name='data', layer_shape=(None, 48, 48, 3))
+layer_factory.new_conv(name='conv1', kernel_size=(3, 3), channels_output=32, stride_size=(1, 1),
+padding='VALID', relu=False)
+layer_factory.new_prelu(name='prelu1')
+layer_factory.new_max_pool(name='pool1', kernel_size=(3, 3), stride_size=(2, 2))
+layer_factory.new_conv(name='conv2', kernel_size=(3, 3), channels_output=64, stride_size=(1, 1),
+padding='VALID', relu=False)
+layer_factory.new_prelu(name='prelu2')
+layer_factory.new_max_pool(name='pool2', kernel_size=(3, 3), stride_size=(2, 2), padding='VALID')
+layer_factory.new_conv(name='conv3', kernel_size=(3, 3), channels_output=64, stride_size=(1, 1),
+padding='VALID', relu=False)
+layer_factory.new_prelu(name='prelu3')
+layer_factory.new_max_pool(name='pool3', kernel_size=(2, 2), stride_size=(2, 2))
+layer_factory.new_conv(name='conv4', kernel_size=(2, 2), channels_output=128, stride_size=(1, 1),
+padding='VALID', relu=False)
+layer_factory.new_prelu(name='prelu4')
+layer_factory.new_fully_connected(name='fc1', output_count=256, relu=False)
+layer_factory.new_prelu(name='prelu5')
+layer_factory.new_fully_connected(name='fc2-1', output_count=2, relu=False)
+layer_factory.new_softmax(name='prob1', axis=1)
+layer_factory.new_fully_connected(name='fc2-2', output_count=4, relu=False, input_layer_name='prelu5')
+layer_factory.new_fully_connected(name='fc2-3', output_count=10, relu=False, input_layer_name='prelu5')
+</pre><p><br></p><p>Note all the code for P-Net, R-Net, and O-Net all import a class named “LayerFactory”. In essence, LayerFactory is a class — created by the makers of this model — to generate layers with specific settings. For more information, you can check out layer_factory.py.</p><hr class="ql-align-center"><p><br></p><p>Click&nbsp;<a href="https://medium.com/@reina.wang/mtcnn-face-detection-cdcb20448ce0" target="_blank" style="color: inherit; background-color: transparent;">here</a>&nbsp;to read about implementing the MTCNN model!</p><p>Click&nbsp;<a href="https://medium.com/@reina.wang/how-does-a-face-detection-program-work-using-neural-networks-17896df8e6ff" target="_blank" style="color: inherit; background-color: transparent;">here</a>&nbsp;to read about how the MTCNN model works!</p><p><br></p><hr class="ql-align-center"><p><br></p><p>Download the MTCNN paper and resources here:</p><p>Github download:&nbsp;<a href="https://github.com/ipazc/mtcnn" target="_blank" style="color: inherit; background-color: transparent;">https://github.com/ipazc/mtcnn</a></p><p>Research article:&nbsp;<a href="http://arxiv.org/abs/1604.02878" target="_blank" style="color: inherit; background-color: transparent;">http://arxiv.org/abs/1604.02878</a></p><p><br></p>
